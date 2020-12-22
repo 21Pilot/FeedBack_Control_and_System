@@ -89,4 +89,59 @@ figure, plot (t, y(:,1), t, y(:,2) , '--') , legend ('y','ydot')
 xlabel ('Time'); ylabel ('Output')
 title ('IC response')
 
+function a = phaseplot(odefun, xlimv, ylimv, xinit, T, varargin)
+ 
+% Initialize the color grid
+color = ['m', 'c', 'r', 'g', 'b', 'k', 'y'];
+ 
+% Figure out the set of points for the quiver plot
+[x1,x2] = meshgrid(xlimv(1):(xlimv(2)-xlimv(1))/xlimv(3):xlimv(2), ylimv(1):(ylimv(2)-ylimv(1))/ylimv(3):ylimv(2));
+ 
+% Figure out if we have parameter arguments and create the required string
+if (length(varargin) == 0)
+  parms = '';
+else
+  parms = ', []';
+  for (k = 1:length(varargin))
+    parms = strcat(parms, sprintf(', %g', varargin{k}));
+  end;
+end;
+ 
+% Now calculate the vector field at those points
+[nr,nc] = size(x1);
+dx = zeros(nr,nc,2);
+for i = 1:nr
+  for j = 1:nc
+%     eval(['dx(' num2str(i) ',' num2str(j) ',1:2) = ' ...
+%   odefun '(0, [' num2str(x1(i,j)) ' ' num2str(x2(i,j)) ']' parms ');']);
+    dx(i,j,1:2) = odefun(0, [x1(i,j) x2(i,j)]);
+ 
+  end
+end
+ 
+% Plot the quiver plot
+% clf; 
+xy=quiver(x1,x2,dx(:,:,1),dx(:,:,2));
+set(xy,'LineWidth',1);
+a=gca; set(a,'DataAspectRatio',[1,1,1]);
+set(a,'XLim',xlimv(1:2)); set(a,'YLim',ylimv(1:2));
+xlabel('h_1'); ylabel('h_2','Rotation',0);
+ 
+% See if we should also generate the streamlines
+if (nargin < 4) return; end
+
+% See if we were passed a simulation time
+if (nargin < 5) T = 50; end
+ 
+% Generate the streamlines for each initial condition
+[nr, nc] = size(xinit);
+for i = 1:nr
+    xinit(i,:)
+    
+  [time, state] = ode45(odefun, [0 T], xinit(i,:), [], varargin{:});
+  hold on;
+  plot(state(:,1), state(:,2), color(mod(i-1, 7)+1));
+end
+set(a,'XLim',xlimv(1:2)); set(a,'YLim',ylimv(1:2));
+
 
